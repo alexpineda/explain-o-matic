@@ -2,7 +2,15 @@
   "main": "./dist/extension.cjs",
   "module": "index.ts",
   "dependencies": {
-    "@types/vscode": "^1.86.0"
+    "@ai-sdk/deepseek": "^0.1.5",
+    "@ai-sdk/openai": "^1.1.4",
+    "@types/node": "^22.10.10",
+    "@types/vscode": "^1.86.0",
+    "add": "^2.0.6",
+    "ai": "^4.1.7",
+    "dotenv": "^16.4.7",
+    "openai": "^4.80.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -22,21 +30,41 @@
     "clean": "rm -r ./dist"
   },
   "//": "START EXTENSION ATTRIBUTES",
-  "name": "explain-me-dat",
+  "name": "code-review-companion",
   "version": "0.0.1",
-  "description": "Extension description",
-  "displayName": "Extension display name",
+  "description": "AI-powered code review assistant with voice guidance",
+  "displayName": "Code Review Companion",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOURNAME"
+    "url": "https://github.com/YOURNAME/code-review-companion"
   },
   "contributes": {
     "commands": [
       {
-        "command": "bun-vscode-extension.helloworld",
-        "title": "Hello World"
+        "command": "codeReview.start",
+        "title": "Review Code Changes"
+      },
+      {
+        "command": "codeReview.next",
+        "title": "Next Section"
+      },
+      {
+        "command": "codeReview.previous",
+        "title": "Previous Section"
+      },
+      {
+        "command": "codeReview.stop",
+        "title": "Stop Review"
       }
-    ]
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "codeReviewSections",
+          "name": "Code Sections"
+        }
+      ]
+    }
   },
   "engines": {
     "vscode": "^1.86.0"

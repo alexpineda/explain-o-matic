@@ -1,0 +1,156 @@
+Code Review Companion - SPECIFICATION
+Overview
+A VS Code extension that helps users review LLM-generated code changes by providing voice-guided walkthroughs and text summaries of code sections. Designed for personal use but built with scalability for future monetization.
+
+Problem Statement
+Why? LLM-generated code changes can be large and disorienting. Users need a guided review process.
+
+How? Combine LLM analysis with voice/text explanations to highlight and explain code sections.
+
+Goals
+Automatically detect logical code sections after LLM modifications.
+
+Provide voice summaries (TTS) and text explanations.
+
+Enable simple navigation between sections.
+
+Work cross-platform (macOS, Windows, Linux).
+
+Core Features
+Feature Description
+LLM-Powered Section Detection Uses OpenAI/Llama to split code into reviewable sections
+OS-Based TTS Voice explanations using native OS tools (say, PowerShell, espeak)
+Text Summary Panel Displays section descriptions in a side panel
+Visual Highlighting Background colors for code sections
+Navigation Controls Next/Previous buttons in status bar
+Cross-Platform Support macOS, Windows, Linux compatibility
+Architecture
+mermaid
+Copy
+graph TD
+A[User Runs Command] --> B[LLM API Call]
+B --> C[Parse Sections]
+C --> D[Highlight Code]
+C --> E[Generate Summaries]
+D --> F[Voice Explanation]
+E --> G[Text Panel]
+F --> H[User Navigation]
+G --> H
+Components
+
+1. LLM Integration
+   Input: Modified code file
+
+Output: JSON array of sections with {name, startLine, endLine, summary}
+
+Example Prompt:
+
+json
+Copy
+{
+"task": "Split this code into review sections",
+"response_format": {"type": "json_object"}
+} 2. TTS Engine
+OS-Specific Implementation:
+
+typescript
+Copy
+if (macOS) exec('say "text"')
+if (Windows) exec('PowerShell Speak')
+if (Linux) exec('espeak "text"') 3. UI Components
+Code Highlighting: VS Code Decoration API
+
+Summary Panel: Webview with markdown rendering
+
+Navigation: Status bar buttons
+
+Workflow
+User runs Review Code Changes command
+
+Extension:
+
+Sends code to LLM API
+
+Receives section data
+
+Highlights code
+
+Speaks first summary
+
+Shows text panel
+
+User navigates with Next/Previous buttons
+
+mermaid
+Copy
+sequenceDiagram
+User->>Extension: Run command
+Extension->>LLM: Send code
+LLM-->>Extension: Return sections
+Extension->>VS Code: Highlight lines
+Extension->>TTS: Speak summary
+Extension->>Webview: Show text
+User->>Extension: Click Next
+Extension->>TTS: Speak next summary
+Technical Considerations
+Security
+Risk: exec usage for TTS
+
+Mitigation: Sanitize text input with regex (/[^a-zA-Z0-9 .,]/g)
+
+Performance
+Large Files: Warn users >1000 lines
+
+Caching: Store LLM responses locally
+
+Error Handling
+Scenario Response
+LLM API failure Show error toast, fallback to regex section detection
+Missing TTS dependency Display OS-specific install instructions
+Accessibility
+Text summaries required (for hearing-impaired users)
+
+Keyboard navigation support
+
+Future Roadmap
+Priority Feature
+P0 MVP with hardcoded sections
+P1 LLM integration
+P2 Monetization hooks
+P3 Configuration UI
+Testing Strategy
+Unit Tests
+
+Section parsing logic
+
+TTS command generation
+
+Integration Tests
+
+Full workflow with mock LLM
+
+Cross-platform TTS verification
+
+User Testing
+
+Manual verification of:
+
+Voice/text sync
+
+Highlighting accuracy
+
+Navigation responsiveness
+
+References
+VS Code Extension API
+
+OpenAI API Documentation
+
+Node.js Child Process
+
+Glossary
+TTS: Text-to-Speech
+
+LLM: Large Language Model (e.g., GPT-4, Llama 3)
+
+MVP: Minimum Viable Product
