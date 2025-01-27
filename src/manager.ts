@@ -8,6 +8,9 @@ export class CodeReviewManager {
   private sections: Section[] = [];
   private highlightDecoration: vscode.TextEditorDecorationType;
   private editor: vscode.TextEditor;
+  private _onSectionChange = new vscode.EventEmitter<Section>();
+
+  public readonly onSectionChange = this._onSectionChange.event;
 
   constructor(editor: vscode.TextEditor, sections: Section[]) {
     this.editor = editor;
@@ -36,6 +39,7 @@ export class CodeReviewManager {
     );
 
     this.editor.setDecorations(this.highlightDecoration, [range]);
+    this.editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
   }
 
   // Move to next section
@@ -49,6 +53,20 @@ export class CodeReviewManager {
       }, 1000);
     } else {
       speak(this.sections[this.currentSection].summary);
+    }
+    this._onSectionChange.fire(this.sections[this.currentSection]);
+  }
+
+  public jumpToSection(section: Section) {
+    const stopped = stopSpeech(); // Stop current speech before new one
+    this.currentSection = this.sections.indexOf(section);
+    this.highlightCurrentSection();
+    if (stopped) {
+      setTimeout(() => {
+        speak(section.summary);
+      }, 1000);
+    } else {
+      speak(section.summary);
     }
   }
 

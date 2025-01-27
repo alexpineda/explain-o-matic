@@ -30,10 +30,10 @@
     "clean": "rm -r ./dist"
   },
   "//": "START EXTENSION ATTRIBUTES",
-  "name": "code-review-companion",
+  "name": "explain-o-matic",
   "version": "0.0.1",
-  "description": "AI-powered code review assistant with voice guidance",
-  "displayName": "Code Review Companion",
+  "description": "LLM code got you down? Explain-o-matic is here to help!",
+  "displayName": "Explain-o-matic",
   "repository": {
     "type": "git",
     "url": "https://github.com/YOURNAME/code-review-companion"
@@ -55,13 +55,29 @@
       {
         "command": "codeReview.stop",
         "title": "Stop Review"
+      },
+      {
+        "command": "codeReview.jumpToSection",
+        "title": "Jump to Section"
+      },
+      {
+        "command": "codeReview.breakdownSection",
+        "title": "Breakdown Section"
       }
     ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "codeReview.breakdownSection",
+          "when": "view == codeReviewSections && viewItem == section"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
-          "id": "codeReviewSections",
-          "name": "Code Sections"
+          "id": "codeReview.sections",
+          "name": "Explain-o-matic"
         }
       ]
     }

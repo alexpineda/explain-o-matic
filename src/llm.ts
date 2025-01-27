@@ -2,19 +2,35 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject, generateText, type CoreMessage } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { z } from "zod";
+import * as vscode from "vscode";
+
+export class UserAbortedError extends Error {
+  constructor() {
+    super("User aborted");
+  }
+}
 
 export async function thinkAboutCode(
-  code: string
-): Promise<{ thoughts: string }> {
-  const response = await generateText({
-    model: deepseek("deepseek-reasoner"),
-    system: `You are a software architect. Analyze this code to identify:
+  code: string,
+  token: vscode.CancellationToken
+): Promise<{ thoughts?: string; error?: Error }> {
+  try {
+    const controller = new AbortController();
+    token?.onCancellationRequested(() => {
+      controller.abort();
+    });
+
+    const response = await generateText({
+      abortSignal: controller.signal,
+      maxTokens: 1,
+      model: deepseek("deepseek-reasoner"),
+      system: `You are a software architect. Analyze this code to identify:
   1. Primary responsibilities and boundaries
   2. Key architectural patterns
   3. Critical data flows
   4. Potential maintenance concerns
   5. Cross-component dependencies`,
-    prompt: `Code to analyze:
+      prompt: `Code to analyze:
   ${code}
   
   Provide concise analysis in this format:
@@ -32,15 +48,31 @@ export async function thinkAboutCode(
   ### Review Focus Areas
   - [Potential stability risks]
   - [Important compatibility considerations]`,
-  });
+    });
 
-  return { thoughts: response.reasoning + "\n\n" + response.text };
+    return {
+      thoughts: response.reasoning + "\n\n" + response.text,
+      error: undefined,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        thoughts: undefined,
+        error: new UserAbortedError(),
+      };
+    }
+    return {
+      thoughts: undefined,
+      error: error as Error,
+    };
+  }
 }
 
 export async function detectSections(
   code: string,
-  thoughts?: string
-): Promise<{ sections: Section[] }> {
+  thoughts?: string,
+  token?: vscode.CancellationToken
+): Promise<{ sections?: Section[]; error?: Error }> {
   const thinkingMessages: Array<CoreMessage> =
     thoughts === undefined
       ? []
@@ -59,7 +91,7 @@ GUIDELINES:
 
 EXAMPLE OUTPUT FOR SETTINGS INTERFACE:
 {
-"name": "Versioned Configuration",
+"name": "Versioned configuration",
 "startLine": 3,
 "endLine": 43,
 "summary": "V5 settings maintaining backward compatibility with deprecated map directories"
@@ -88,7 +120,7 @@ GUIDELINES:
 
 EXAMPLE OUTPUT FOR SETTINGS INTERFACE:
 {
-"name": "Versioned Configuration",
+"name": "Versioned configuration",
 "startLine": 3,
 "endLine": 43,
 "summary": "V5 settings maintaining backward compatibility with deprecated map directories"
@@ -97,7 +129,12 @@ EXAMPLE OUTPUT FOR SETTINGS INTERFACE:
   ];
 
   try {
+    const controller = new AbortController();
+    token?.onCancellationRequested(() => {
+      controller.abort();
+    });
     const response = await generateObject({
+      abortSignal: controller.signal,
       model: deepseek("deepseek-coder"),
       system: `You are a code review expert. Analyze code structure and create sections that:
   1. Explain WHY code exists, not just WHAT it does
@@ -111,14 +148,14 @@ EXAMPLE OUTPUT FOR SETTINGS INTERFACE:
   BAD SECTION:
   {
     "name": "Settings Interface",
-    "startLine": 5,
+    "startLine": 15,
     "endLine": 10,
     "summary": "Defines settings type"
   }
   
   GOOD SECTION:
   {
-    "name": "Graphics Configuration",
+    "name": "Graphics configuration",
     "startLine": 23,
     "endLine": 28,
     "summary": "HD/3D rendering flags with fallback to legacy SD modes"
@@ -150,10 +187,12 @@ EXAMPLE OUTPUT FOR SETTINGS INTERFACE:
     //   return acc;
     // }, [] as Section[]);
 
-    return { sections: response.object.sections };
+    return { sections: response.object.sections, error: undefined };
   } catch (error) {
-    console.error("Section analysis failed:", error);
-    throw error;
+    if (error instanceof Error && error.name === "AbortError") {
+      return { sections: undefined, error: new UserAbortedError() };
+    }
+    return { sections: undefined, error: error as Error };
   }
 }
 export interface Section {

@@ -2,6 +2,8 @@ Code Review Companion - SPECIFICATION
 Overview
 A VS Code extension that helps users review LLM-generated code changes by providing voice-guided walkthroughs and text summaries of code sections. Designed for personal use but built with scalability for future monetization.
 
+Built using TypeScript, Bun, and VS Code Extension API.
+
 Problem Statement
 Why? LLM-generated code changes can be large and disorienting. Users need a guided review process.
 
@@ -140,13 +142,6 @@ Voice/text sync
 Highlighting accuracy
 
 Navigation responsiveness
-
-References
-VS Code Extension API
-
-OpenAI API Documentation
-
-Node.js Child Process
 
 Glossary
 TTS: Text-to-Speech
