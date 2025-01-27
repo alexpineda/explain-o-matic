@@ -56,8 +56,16 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showInformationMessage("Continuing without thinking");
         }
 
-        if (error) {
-          vscode.window.showErrorMessage(`Code review failed: ${error}`);
+        if (error && !(error instanceof UserAbortedError)) {
+          const proceed = await vscode.window.showWarningMessage(
+            "Thinking failed. Continue?",
+            "Continue",
+            "Cancel"
+          );
+          if (proceed !== "Continue") {
+            vscode.window.showErrorMessage(`Thinking failed: ${error}`);
+            return;
+          }
         }
 
         // Add progress notification
@@ -76,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
               return;
             }
 
-            if (lineCount > 10_000) {
+            if (lineCount > 1_000) {
               const proceed = await vscode.window.showWarningMessage(
                 "Large file detected. Review may be slow.",
                 "Continue",
