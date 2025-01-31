@@ -1,8 +1,6 @@
 # Explain-o-matic 🤖🔊
 
-_Voice-guided code change reviews for LLM-generated code. Quickly grok what the code is about with high level summaries._
-
-> You know when you're hurting after a 10 hour coding binge and you can't even think about the code your LLM is generating? Maybe this is for you.
+_Voice-guided code walkthroughs. Great for LLM-generated code. Quickly grok what the code is about with high level summaries. Break down sections to get more details._
 
 ![](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![](https://img.shields.io/badge/VSCode-007ACC?logo=visualstudiocode&logoColor=white)

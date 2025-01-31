@@ -1,8 +1,8 @@
 {
   "name": "explain-o-matic",
   "publisher": "weloveoov",
-  "version": "1.0.3",
-  "description": "LLM code got you down? Explain-o-matic is here to help!",
+  "version": "1.0.4",
+  "description": "Voice-guided code walkthroughs. Great for LLM-generated code. Quickly grok what the code is about with high level summaries.",
   "displayName": "Explain-o-matic",
   "icon": "./resources/icon.png",
   "repository": {
