@@ -44,6 +44,15 @@ export function activate(context: vscode.ExtensionContext) {
         code: editor.document.getText(),
         fileName: basename(editor.document.fileName),
       };
+
+      if (fileCode.code.split("\n").length > config.fileSizeWarningThreshold) {
+        const proceed = await vscode.window.showWarningMessage(
+          "Large file detected. Review may be slow.",
+          "Continue",
+          "Cancel"
+        );
+        if (proceed !== "Continue") return;
+      }
       // Show processing status
       statusIndicator.text = "$(sync~spin) Explain-o-matic";
       statusIndicator.show();
