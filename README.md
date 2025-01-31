@@ -28,6 +28,12 @@ This extension is experimental and not all features are available.
 
 ## Install
 
+### Marketplace
+
+[Download from Marketplace](https://marketplace.visualstudio.com/items?itemName=weloveoov.explain-o-matic)
+
+### From VSIX
+
 ```bash
 code --install-extension explain-o-matic-1.0.0.vsix
 ```
