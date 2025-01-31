@@ -29,6 +29,7 @@ This extension is experimental and not all features are available.
 ## Install
 
 ### Marketplace
+![icon](https://github.com/user-attachments/assets/ab0edc7a-f260-4b91-8182-feb866c85fe5)
 
 [Download from Marketplace](https://marketplace.visualstudio.com/items?itemName=weloveoov.explain-o-matic)
 
