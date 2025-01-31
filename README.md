@@ -2,6 +2,8 @@
 
 _Voice-guided code change reviews for LLM-generated code_
 
+You know when you're hurting after a 10 hour coding binge and you can't even think about the code your LLM is generating? Maybe this is for you.
+
 ![](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![](https://img.shields.io/badge/VSCode-007ACC?logo=visualstudiocode&logoColor=white)
 
@@ -9,22 +11,16 @@ _Voice-guided code change reviews for LLM-generated code_
 
 ## Features
 
-- 🎙️ **AI-Powered Code Breakdown**  
-  Automatically splits code changes into logical sections
-- 📢 **Voice Explanations**  
-  Speaks summaries using your OS's native TTS (no API needed)
-- 🖍️ **Visual Highlights**  
-  Color-coded code section decorations
+- 🎙️ **AI-Powered Code Breakdown & Voice Explanations**  
+  Automatically splits code changes into logical sections and speaks summaries using your OS's native TTS (no API needed)
 - ↔️ **Smart Navigation**  
-  Jump between sections with status bar controls
-- 📝 **Text Summaries**  
-  Side panel shows section descriptions
+  Jump between sections with status bar controls and navigator
 
 ---
 
 ⚠️ **Experimental Warning**
 
-This extension is currently in beta testing phase:
+This extension is experimental and not all features are available.
 
 - ✅ Tested on macOS Sequoia
 - ⚠️ TTS not tested on Windows/Linux
@@ -39,33 +35,32 @@ code --install-extension explain-o-matic-0.1.0.vsix
 
 1. Run `Explain-o-matic: Start Review` from command palette
 2. Use these controls:
-   - `Next Section` → Status bar →
-   - `Stop Review` → Status bar ⬛
+   - `Next Section` → Status bar → (or `Explain-o-matic: Next Section` from command palette)
+   - `Stop Review` → Status bar ⬛ (or `Explain-o-matic: Stop Review` from command palette)
 3. Click sections in side panel to jump
+4. Right click sections in side panel to breakdown sections (or `Explain-o-matic: Breakdown Section` from command palette)
 
-## Config
+## Configure LLMs
 
 Add to settings.json:
 
 ```json
-"explainomatic.useReasoner": true,
-"explainomatic.useEnvKeys": false,
 "explainomatic.llm": {
     "reasoner": {
         "provider": "deepseek",
         "model": "deepseek-reasoning",
-        "apiKey": "sk-your-key-here",
+        "apiKey": "sk-your-key-here (or we read from ENV)",
     },
     "sectioner": {
         "provider": "anthropic",
         "model": "claude-3-5-sonnet-20240620",
-        "apiKey": "sk-your-key-here",
+        "apiKey": "sk-your-key-here (or we read from ENV)",
         "temperature": 0.1
     }
 }
 ```
 
-If reasoner is enabled, it will be used to analyze the code and pass on it's output to the codeReviewer. Meant for models that expose their reasoning process only.
+If reasoner is enabled, it will be used to analyze the code and pass on it's output to the codeReviewer. Meant for models that expose their reasoning process only. Useful in getting better breakdowns.
 
 The code reviewer breaks up the code into sections.
 
@@ -81,7 +76,7 @@ The code reviewer breaks up the code into sections.
 
 Feel free to add more providers. We're just wrapping the Vercel AI SDK.
 
-## Troubleshooting
+## Troubleshooting and more options
 
 **No Speech?**
 
@@ -99,14 +94,18 @@ Feel free to add more providers. We're just wrapping the Vercel AI SDK.
 > Add warning threshold to settings:  
 > `"explainomatic.fileSizeWarning": 500`
 
+**Other Options**
+
+- `explainomatic.useReasoner` to enable/disable the reasoner
+- `explainomatic.showStatusBarButtons` to show/hide the status bar buttons
+
 ---
 
 ## Future plans
 
 - [ ] Add more LLM providers
 - [ ] Support for local LLMs
-- [ ] Breakdown of sections into smaller sections
-- [ ] More options like disabling the status bar controls
+- [ ] Support for Github Copilot API
 - [ ] GUI for configuration
 
 ## Maybe?

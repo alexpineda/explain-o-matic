@@ -1,20 +1,24 @@
 import * as vscode from "vscode";
-import { sectionCode, reasonAboutCode } from "./llm";
 import { SectionInteractionManager } from "./section-interaction-manager";
 import { SectionTreeProvider } from "./elements/section-tree";
-import { basename } from "path";
-import { outputChannel } from "./elements/output-channel";
-import { fileSizeWarningThreshold, useReasoner } from "./config";
-import { UserAbortedError } from "./utils";
 import * as cmds from "./commands";
 import * as elements from "./elements/statusbar";
+import * as shortcuts from "./elements/context";
+import * as config from "./config";
+import { getThoughts } from "./functions/get-thoughts";
+import type { FileCode } from "./types";
+import { getSections } from "./functions/get-sections";
+import { basename } from "path";
+import { outputChannel } from "./elements/output-channel";
 
 let manager: SectionInteractionManager | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
+  shortcuts.disableCodeReview();
+
   const sectionTreeProvider = new SectionTreeProvider();
-  vscode.window.registerTreeDataProvider(
-    "codeReview.sections",
+  const treeView = vscode.window.registerTreeDataProvider(
+    "codeReviewTree",
     sectionTreeProvider
   );
 
@@ -24,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
       manager = undefined;
       nextButton.hide();
       stopButton.hide();
+      shortcuts.disableCodeReview();
     }
   };
 
@@ -35,101 +40,89 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     try {
-      const code = editor.document.getText();
+      const fileCode: FileCode = {
+        code: editor.document.getText(),
+        fileName: basename(editor.document.fileName),
+      };
       // Show processing status
       statusIndicator.text = "$(sync~spin) Explain-o-matic";
       statusIndicator.show();
 
       let thoughts: string | undefined = undefined;
 
-      if (useReasoner) {
-        const { thoughts: _thoughts, error } = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: `Reasoning about ${basename(
-              editor.document.fileName
-            )} (one sec)`,
-            cancellable: true,
-          },
-          async (_progress, token) => {
-            return await reasonAboutCode(code, token);
-          }
-        );
-        thoughts = _thoughts;
-
-        if (error instanceof UserAbortedError) {
-          vscode.window.showInformationMessage("Skipping reasoning.");
-        }
-
-        if (error && !(error instanceof UserAbortedError)) {
-          outputChannel.appendLine(`Thinking failed: ${error}`);
-          const proceed = await vscode.window.showWarningMessage(
-            "Thinking failed. Continue?",
-            "Continue",
-            "Cancel"
-          );
-          if (proceed !== "Continue") {
-            vscode.window.showErrorMessage(`Thinking failed: ${error}`);
-            return;
-          }
-        }
+      if (config.useReasoner) {
+        thoughts = await getThoughts(fileCode);
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Breaking it down for you...",
-          cancellable: true,
-        },
-        async (_progress, token) => {
-          const lineCount = code.split("\n").length;
-          outputChannel.appendLine(`Processing file with ${lineCount} lines`);
+      const sections = await getSections(fileCode, thoughts);
+      if (!sections) {
+        statusIndicator.hide();
+        return;
+      }
 
-          if (lineCount === 0) {
-            vscode.window.showErrorMessage("File is empty!");
-            return;
-          }
+      manager = new SectionInteractionManager(editor, sectionTreeProvider);
+      manager.setSections(sections);
+      manager.next(); // Highlight first section
 
-          if (lineCount > fileSizeWarningThreshold) {
-            const proceed = await vscode.window.showWarningMessage(
-              "Large file detected. Review may be slow.",
-              "Continue",
-              "Cancel"
-            );
-            if (proceed !== "Continue") return;
-          }
+      nextButton.show();
+      stopButton.show();
 
-          // outputChannel.appendLine(code);
-          const { sections, error } = await sectionCode(code, thoughts, token);
-          if (error instanceof UserAbortedError) {
-            return;
-          }
-          if (error) {
-            vscode.window.showErrorMessage(`Code review failed: ${error}`);
-            return;
-          }
-          // outputChannel.appendLine(JSON.stringify(sections));
-
-          if (!sections || sections.length === 0) {
-            vscode.window.showErrorMessage("No sections detected!");
-            return;
-          }
-
-          manager = new SectionInteractionManager(editor, sectionTreeProvider);
-          manager.setSections(sections);
-          manager.next(); // Highlight first section
-
-          nextButton.show();
-          stopButton.show();
-        }
-      );
-
-      statusIndicator.hide();
+      shortcuts.enableCodeReview();
     } catch (error) {
-      statusIndicator.hide();
+      manager?.dispose();
+      outputChannel.appendLine(`Code review failed: ${(error as Error).stack}`);
       vscode.window.showErrorMessage(`Code review failed: ${error}`);
+    } finally {
+      statusIndicator.hide();
     }
   });
+
+  const breakdownSectionCommand = cmds.breakdownSectionCommand(
+    async ({ section }) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No active editor found");
+        return;
+      }
+      if (!manager) {
+        vscode.window.showErrorMessage("No active code review session");
+        return;
+      }
+
+      try {
+        const code = editor.document.getText();
+        const fileCode: FileCode = {
+          code: code
+            .split("\n")
+            .slice(section.analysis.startLine, section.analysis.endLine)
+            .join("\n"),
+          fileName: section.analysis.name,
+        };
+        // Show processing status
+        statusIndicator.text = "$(sync~spin) Explain-o-matic";
+        statusIndicator.show();
+
+        let thoughts: string | undefined = undefined;
+
+        if (config.useReasoner) {
+          thoughts = await getThoughts(fileCode);
+        }
+
+        const sections = await getSections(fileCode, thoughts);
+        if (!sections) {
+          statusIndicator.hide();
+          return;
+        }
+
+        const children = manager.addChildren(sections, section);
+        manager.jumpTo(children[0]);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Code review failed: ${error}`);
+      } finally {
+        statusIndicator.hide();
+      }
+    }
+  );
 
   const nextCommand = cmds.nextCommand(() => {
     if (manager) manager.next();
@@ -138,10 +131,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   const jumpToSectionCommand = cmds.jumpToSectionCommand((section) => {
     if (manager) manager.jumpTo(section);
-  });
-  // todo
-  const breakdownSectionCommand = cmds.breakdownSectionCommand((section) => {
-    console.log(section);
   });
 
   const windowChangeHandler = vscode.window.onDidChangeActiveTextEditor(() => {
@@ -161,7 +150,8 @@ export function activate(context: vscode.ExtensionContext) {
     stopButton,
     statusIndicator,
     jumpToSectionCommand,
-    windowChangeHandler
+    windowChangeHandler,
+    treeView
   );
 }
 

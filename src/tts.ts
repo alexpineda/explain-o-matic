@@ -7,8 +7,8 @@ export function stopSpeech() {
   if (currentProcess) {
     // Force kill the speech process
     if (platform() === "win32") {
-      exec("taskkill /F /IM powershell.exe");
-      //   exec(`taskkill /pid ${currentProcess.pid} /f /t`);
+      // exec("taskkill /F /IM powershell.exe");
+      exec(`taskkill /pid ${currentProcess.pid} /f /t`);
     } else if (platform() === "darwin") {
       exec("pkill say");
     } else {

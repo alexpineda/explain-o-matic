@@ -50,37 +50,38 @@
       },
       {
         "command": "codeReview.next",
-        "title": "Next Section"
-      },
-      {
-        "command": "codeReview.previous",
-        "title": "Previous Section"
+        "title": "Explain-o-matic: Next Section",
+        "when": "codeReview:isActive"
       },
       {
         "command": "codeReview.stop",
-        "title": "Stop Review"
+        "title": "Explain-o-matic: Stop Review",
+        "when": "codeReview:isActive"
       },
       {
         "command": "codeReview.jumpToSection",
-        "title": "Jump to Section"
+        "title": "Explain-o-matic: Jump to Section",
+        "when": "codeReview:isActive"
       },
       {
         "command": "codeReview.breakdownSection",
-        "title": "Breakdown Section"
+        "title": "Explain-o-matic: Breakdown Section",
+        "when": "codeReview:isActive"
       }
     ],
     "menus": {
       "view/item/context": [
         {
           "command": "codeReview.breakdownSection",
-          "when": "view == codeReviewSections && viewItem == section"
+          "when": "view == codeReviewTree && viewItem == section",
+          "group": "codeReview"
         }
       ]
     },
     "views": {
       "explorer": [
         {
-          "id": "codeReview.sections",
+          "id": "codeReviewTree",
           "name": "Explain-o-matic"
         }
       ]

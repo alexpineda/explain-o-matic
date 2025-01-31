@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { Section } from "./types";
+import type { SectionItem } from "./elements/section-tree";
 
 export const nextCommand = (cb: () => void) =>
   vscode.commands.registerCommand("codeReview.next", cb);
@@ -7,7 +8,7 @@ export const nextCommand = (cb: () => void) =>
 export const stopCommand = (cb: () => void) =>
   vscode.commands.registerCommand("codeReview.stop", cb);
 
-export const breakdownSectionCommand = (cb: (section: Section) => void) =>
+export const breakdownSectionCommand = (cb: (section: SectionItem) => void) =>
   vscode.commands.registerCommand("codeReview.breakdownSection", cb);
 
 export const jumpToSectionCommand = (cb: (section: Section) => void) =>

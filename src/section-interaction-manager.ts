@@ -5,13 +5,14 @@ import { speak, stopSpeech } from "./tts";
 import type { SectionTreeProvider } from "./elements/section-tree";
 
 export class SectionInteractionManager {
-  private currentSection = -1;
+  private currentSection: Section | undefined;
   private sections: Section[] = [];
   private highlightDecoration: vscode.TextEditorDecorationType;
   private editor: vscode.TextEditor;
   private _onSectionChange = new vscode.EventEmitter<Section>();
   private sectionTreeProvider: SectionTreeProvider;
   public readonly onSectionChange = this._onSectionChange.event;
+  #timeout: Timer;
 
   constructor(
     editor: vscode.TextEditor,
@@ -27,14 +28,36 @@ export class SectionInteractionManager {
     });
   }
 
+  get flattenedSections() {
+    return this.sections.flatMap((section) => [section, ...section.children]);
+  }
+
   public setSections(sections: Section[]) {
     this.sections = sections;
     this.sectionTreeProvider.setSections(sections);
   }
 
+  public addChildren(children: Section[], parent: Section) {
+    const adjusted = children.map((c) => ({
+      ...c,
+      analysis: {
+        ...c.analysis,
+        startLine: c.analysis.startLine + parent.analysis.startLine,
+        endLine: c.analysis.endLine + parent.analysis.startLine,
+      },
+    }));
+    // replace the parent so we don't go to it when using next/previous
+    parent.children = adjusted;
+    this.sectionTreeProvider.addChildren();
+    return adjusted;
+  }
+
   // Highlight the current section
   private highlightCurrentSection() {
-    const section = this.sections[this.currentSection];
+    const section = this.currentSection;
+    if (!section) {
+      return;
+    }
 
     // Convert 1-based lines to 0-based and ensure endLine is inclusive
     const startLine = Math.max(0, section.analysis.startLine - 1);
@@ -53,36 +76,41 @@ export class SectionInteractionManager {
   }
 
   #next(section: Section) {
-    const stopped = stopSpeech(); // Stop current speech before new one
+    clearTimeout(this.#timeout);
+    stopSpeech(); // Stop current speech before new one
     this.highlightCurrentSection();
-    if (stopped) {
-      setTimeout(() => {
-        speak(section.analysis.summary);
-      }, 1000);
-    } else {
+    // necessary to wait for stop speech
+    // also acts as debounce for fast switchers
+    this.#timeout = setTimeout(() => {
       speak(section.analysis.summary);
-    }
+    }, 500);
     this._onSectionChange.fire(section);
   }
 
   public next() {
-    this.currentSection = (this.currentSection + 1) % this.sections.length;
-    this.#next(this.sections[this.currentSection]);
+    const sections = this.flattenedSections;
+    const idx = sections.findIndex((s) => s === this.currentSection);
+    this.currentSection = sections[(idx + 1) % sections.length];
+    this.#next(this.currentSection);
   }
 
   public jumpTo(section: Section) {
-    this.currentSection = this.sections.findIndex(
-      (s) => s.analysis.startLine === section.analysis.startLine
-    );
-    this.#next(this.sections[this.currentSection]);
+    const validSection = this.flattenedSections.find((s) => s === section);
+    if (!validSection) {
+      return;
+    }
+    this.currentSection = validSection;
+    this.#next(this.currentSection);
   }
 
   public stop() {
     stopSpeech();
+    clearTimeout(this.#timeout);
     this.editor.setDecorations(this.highlightDecoration, []);
   }
 
   public dispose() {
+    clearTimeout(this.#timeout);
     this.highlightDecoration.dispose();
   }
 }

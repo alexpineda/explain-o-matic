@@ -83,6 +83,7 @@ export async function sectionCode(
           return sectionSchema.parse({
             analysis,
             code,
+            children: [],
           });
         } catch (e) {
           throw e;

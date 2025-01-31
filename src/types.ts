@@ -9,9 +9,21 @@ export const sectionAnalysisSchema = z.object({
   summary: z.string(),
 });
 
-export const sectionSchema = z.object({
-  analysis: sectionAnalysisSchema,
-  code: z.string(),
-});
+export const sectionSchema: z.ZodType<Section> = z.lazy(() =>
+  z.object({
+    analysis: sectionAnalysisSchema,
+    code: z.string(),
+    children: z.array(sectionSchema),
+  })
+);
 
-export type Section = z.infer<typeof sectionSchema>;
+export type Section = {
+  analysis: SectionAnalysis;
+  code: string;
+  children: Section[];
+};
+
+export type FileCode = {
+  code: string;
+  fileName: string;
+};
