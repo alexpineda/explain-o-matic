@@ -1,10 +1,10 @@
-import type { Section } from "./llm";
+import type { SectionAnalysis } from "./llm";
 
 export type SummaryData = {
   type: "summary";
   data: {
     thoughts?: string;
-    sections: Section[];
+    sections: SectionAnalysis[];
   };
 };
 

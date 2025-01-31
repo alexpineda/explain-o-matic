@@ -28,10 +28,10 @@ export class SectionTreeProvider
 
 class SectionItem extends vscode.TreeItem {
   constructor(public readonly section: Section, isCurrent: boolean) {
-    super(section.name, vscode.TreeItemCollapsibleState.None);
+    super(section.analysis.name, vscode.TreeItemCollapsibleState.None);
 
-    this.description = section.summary;
-    this.tooltip = `Lines ${section.startLine}-${section.endLine}`;
+    this.description = section.analysis.summary;
+    this.tooltip = `Lines ${section.analysis.startLine}-${section.analysis.endLine}`;
     this.command = {
       command: "codeReview.jumpToSection",
       title: "Jump to Section",

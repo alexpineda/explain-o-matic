@@ -2,18 +2,27 @@
   "main": "./dist/extension.cjs",
   "module": "index.ts",
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.4",
     "@ai-sdk/deepseek": "^0.1.5",
+    "@ai-sdk/google-vertex": "^2.1.4",
+    "@ai-sdk/groq": "^1.1.5",
     "@ai-sdk/openai": "^1.1.4",
+    "@ai-sdk/openai-compatible": "^0.1.5",
+    "@ai-sdk/xai": "^1.1.5",
     "@types/node": "^22.10.10",
     "@types/vscode": "^1.86.0",
     "add": "^2.0.6",
     "ai": "^4.1.7",
     "dotenv": "^16.4.7",
+    "markdown-it": "^14.1.0",
     "openai": "^4.80.1",
+    "source-map-support": "^0.5.21",
+    "yaml": "^2.7.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/markdown-it": "^14.1.2",
     "@vscode/vsce": "^2.23.0",
     "esbuild": "^0.20.0"
   },
@@ -80,6 +89,74 @@
           "name": "Explain-o-matic"
         }
       ]
+    },
+    "configuration": {
+      "title": "Explain-o-matic",
+      "properties": {
+        "explainomatic.useReasoner": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to use the reasoner LLM to analyze the code."
+        },
+        "explainomatic.fileSizeWarning": {
+          "type": "number",
+          "default": 500,
+          "description": "The file size in lines at which the extension will warn you that the file is large and may take a while to process."
+        },
+        "explainomatic.useEnvKeys": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to try and use environment variables for the LLM API keys."
+        },
+        "explainomatic.llm": {
+          "type": "object",
+          "properties": {
+            "reasoner": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "default": "deepseek",
+                  "description": "The provider to use for the LLM."
+                },
+                "model": {
+                  "type": "string",
+                  "default": "deepseek-reasoning",
+                  "description": "The model to use for the LLM."
+                },
+                "apiKey": {
+                  "type": "string",
+                  "description": "The API key to use for the LLM."
+                }
+              }
+            },
+            "sectioner": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "default": "anthropic",
+                  "description": "The provider to use for the LLM."
+                },
+                "model": {
+                  "type": "string",
+                  "default": "claude-3-5-sonnet-20240620",
+                  "description": "The model to use for the LLM."
+                },
+                "temperature": {
+                  "type": "number",
+                  "default": 0.1,
+                  "description": "The temperature to use for the LLM."
+                },
+                "apiKey": {
+                  "type": "string",
+                  "description": "The API key to use for the LLM."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "engines": {

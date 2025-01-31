@@ -28,8 +28,8 @@ export class CodeReviewManager {
     const section = this.sections[this.currentSection];
 
     // Convert 1-based lines to 0-based and ensure endLine is inclusive
-    const startLine = Math.max(0, section.startLine - 1);
-    const endLine = section.endLine - 1; // Convert to inclusive 0-based
+    const startLine = Math.max(0, section.analysis.startLine - 1);
+    const endLine = section.analysis.endLine - 1; // Convert to inclusive 0-based
 
     const range = new vscode.Range(
       startLine,
@@ -42,32 +42,30 @@ export class CodeReviewManager {
     this.editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
   }
 
-  // Move to next section
-  public nextSection() {
+  #playSection(section: Section) {
     const stopped = stopSpeech(); // Stop current speech before new one
-    this.currentSection = (this.currentSection + 1) % this.sections.length;
     this.highlightCurrentSection();
     if (stopped) {
       setTimeout(() => {
-        speak(this.sections[this.currentSection].summary);
+        speak(section.analysis.summary);
       }, 1000);
     } else {
-      speak(this.sections[this.currentSection].summary);
+      speak(section.analysis.summary);
     }
-    this._onSectionChange.fire(this.sections[this.currentSection]);
+    this._onSectionChange.fire(section);
+  }
+
+  // Move to next section
+  public nextSection() {
+    this.currentSection = (this.currentSection + 1) % this.sections.length;
+    this.#playSection(this.sections[this.currentSection]);
   }
 
   public jumpToSection(section: Section) {
-    const stopped = stopSpeech(); // Stop current speech before new one
-    this.currentSection = this.sections.indexOf(section);
-    this.highlightCurrentSection();
-    if (stopped) {
-      setTimeout(() => {
-        speak(section.summary);
-      }, 1000);
-    } else {
-      speak(section.summary);
-    }
+    this.currentSection = this.sections.findIndex(
+      (s) => s.analysis.startLine === section.analysis.startLine
+    );
+    this.#playSection(this.sections[this.currentSection]);
   }
 
   // Stop the review process
@@ -80,6 +78,5 @@ export class CodeReviewManager {
   // Cleanup
   public dispose() {
     this.highlightDecoration.dispose();
-    // Add any other cleanup (e.g., stop TTS mid-speech)
   }
 }

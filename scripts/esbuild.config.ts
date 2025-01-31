@@ -17,6 +17,7 @@ const config: BuildOptions = {
     ".js": "js",
   },
   logLevel: "info",
+  sourcemap: true,
 };
 
 export default config;

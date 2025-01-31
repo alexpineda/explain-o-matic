@@ -1,21 +1,22 @@
+import "source-map-support/register"; // Add this line
 import * as vscode from "vscode";
 import {
-  detectSections,
+  sectionCode,
   thinkAboutCode,
   UserAbortedError,
   type Section,
+  type SectionAnalysis,
 } from "./llm";
 import { CodeReviewManager } from "./manager";
-import { stopSpeech } from "./tts";
 import { SectionTreeProvider } from "./sectionTree";
 import { basename } from "path";
+import { outputChannel } from "./output-channel";
+import { fileSizeWarningThreshold, useReasoner } from "./config";
 
 let manager: CodeReviewManager | undefined;
 let nextButton: vscode.StatusBarItem;
 export let stopButton: vscode.StatusBarItem;
 export let statusIndicator: vscode.StatusBarItem;
-
-const outputChannel = vscode.window.createOutputChannel("Explain-o-matic");
 
 export function activate(context: vscode.ExtensionContext) {
   const sectionTreeProvider = new SectionTreeProvider();
@@ -36,35 +37,41 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const code = editor.document.getText();
         // Show processing status
-        statusIndicator.text = "$(sync~spin) Processing sections";
+        statusIndicator.text = "$(sync~spin) Explain-o-matic";
         statusIndicator.show();
 
-        const { thoughts, error } = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: `Thinking about ${basename(
-              editor.document.fileName
-            )} (one sec)`,
-            cancellable: true,
-          },
-          async (_progress, token) => {
-            return await thinkAboutCode(code, token);
+        let thoughts: string | undefined = undefined;
+
+        if (useReasoner) {
+          const { thoughts: _thoughts, error } =
+            await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: `Reasoning about ${basename(
+                  editor.document.fileName
+                )} (one sec)`,
+                cancellable: true,
+              },
+              async (_progress, token) => {
+                return await thinkAboutCode(code, token);
+              }
+            );
+          thoughts = _thoughts;
+
+          if (error instanceof UserAbortedError) {
+            vscode.window.showInformationMessage("Skipping reasoning.");
           }
-        );
 
-        if (error instanceof UserAbortedError) {
-          vscode.window.showInformationMessage("Continuing without thinking");
-        }
-
-        if (error && !(error instanceof UserAbortedError)) {
-          const proceed = await vscode.window.showWarningMessage(
-            "Thinking failed. Continue?",
-            "Continue",
-            "Cancel"
-          );
-          if (proceed !== "Continue") {
-            vscode.window.showErrorMessage(`Thinking failed: ${error}`);
-            return;
+          if (error && !(error instanceof UserAbortedError)) {
+            const proceed = await vscode.window.showWarningMessage(
+              "Thinking failed. Continue?",
+              "Continue",
+              "Cancel"
+            );
+            if (proceed !== "Continue") {
+              vscode.window.showErrorMessage(`Thinking failed: ${error}`);
+              return;
+            }
           }
         }
 
@@ -84,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
               return;
             }
 
-            if (lineCount > 1_000) {
+            if (lineCount > fileSizeWarningThreshold) {
               const proceed = await vscode.window.showWarningMessage(
                 "Large file detected. Review may be slow.",
                 "Continue",
@@ -94,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             outputChannel.appendLine(code);
-            const { sections, error } = await detectSections(
+            const { sections, error } = await sectionCode(
               code,
               thoughts,
               token
@@ -108,23 +115,15 @@ export function activate(context: vscode.ExtensionContext) {
             }
             outputChannel.appendLine(JSON.stringify(sections));
 
-            // In highlightCurrentSection()
             if (!sections || sections.length === 0) {
               vscode.window.showErrorMessage("No sections detected!");
               return;
             }
 
-            // After getting sections from LLM
-            if (!sections.every((s) => s.startLine < s.endLine)) {
-              throw new Error("Invalid line numbers: startLine >= endLine");
-            }
-
-            // Initialize manager
             manager = new CodeReviewManager(editor, sections);
             sectionTreeProvider.updateSections(sections);
             manager.nextSection(); // Highlight first section
 
-            // Show status bar controls
             nextButton.show();
             stopButton.show();
           }
@@ -138,25 +137,26 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Next section command
   const nextCommand = vscode.commands.registerCommand("codeReview.next", () => {
     if (manager) manager.nextSection();
   });
 
-  // Stop command
-  const stopCommand = vscode.commands.registerCommand("codeReview.stop", () => {
-    stopSpeech();
+  const stop = () => {
     if (manager) {
       manager.stop();
       manager = undefined;
       nextButton.hide();
       stopButton.hide();
     }
+  };
+  // Stop command
+  const stopCommand = vscode.commands.registerCommand("codeReview.stop", () => {
+    stop();
   });
 
   const breakdownSectionCommand = vscode.commands.registerCommand(
     "codeReview.breakdownSection",
-    (section: Section) => {
+    (section: SectionAnalysis) => {
       console.log(section);
     }
   );
@@ -190,6 +190,10 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const windowChangeHandler = vscode.window.onDidChangeActiveTextEditor(() => {
+    stop();
+  });
+
   context.subscriptions.push(
     startCommand,
     nextCommand,
@@ -198,7 +202,8 @@ export function activate(context: vscode.ExtensionContext) {
     nextButton,
     stopButton,
     statusIndicator,
-    jumpToSectionCommand
+    jumpToSectionCommand,
+    windowChangeHandler
   );
 }
 
