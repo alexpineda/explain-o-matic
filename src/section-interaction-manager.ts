@@ -28,8 +28,16 @@ export class SectionInteractionManager {
     });
   }
 
+  #getFlattenedSections(sections: Section[]): Section[] {
+    return sections.flatMap((section) => [
+      section,
+      ...this.#getFlattenedSections(section.children),
+    ]);
+  }
+
   get flattenedSections() {
-    return this.sections.flatMap((section) => [section, ...section.children]);
+    const sections = this.#getFlattenedSections(this.sections);
+    return sections;
   }
 
   public setSections(sections: Section[]) {
@@ -110,7 +118,7 @@ export class SectionInteractionManager {
   }
 
   public dispose() {
-    clearTimeout(this.#timeout);
+    this.stop();
     this.highlightDecoration.dispose();
   }
 }

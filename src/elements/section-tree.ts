@@ -62,13 +62,11 @@ export class SectionItem extends vscode.TreeItem {
     this.tooltip = section.analysis.summary;
     this.description = `Lines ${section.analysis.startLine}-${section.analysis.endLine}`;
 
-    if (section.children.length === 0) {
-      this.command = {
-        command: "codeReview.jumpToSection",
-        title: "Jump to Section",
-        arguments: [section],
-      };
-    }
+    this.command = {
+      command: "codeReview.jumpToSection",
+      title: "Jump to Section",
+      arguments: [section],
+    };
 
     this.contextValue = "section"; // For context menu actions
     this.iconPath = isCurrent

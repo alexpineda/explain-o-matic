@@ -1,4 +1,12 @@
 {
+  "name": "explain-o-matic",
+  "version": "1.0.0",
+  "description": "LLM code got you down? Explain-o-matic is here to help!",
+  "displayName": "Explain-o-matic",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexpineda/explain-o-matic"
+  },
   "main": "./dist/extension.cjs",
   "module": "index.ts",
   "dependencies": {
@@ -34,14 +42,6 @@
     "typecheck": "tsc --noEmit"
   },
   "//": "START EXTENSION ATTRIBUTES",
-  "name": "explain-o-matic",
-  "version": "0.0.1",
-  "description": "LLM code got you down? Explain-o-matic is here to help!",
-  "displayName": "Explain-o-matic",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/alexpineda/explain-o-matic"
-  },
   "contributes": {
     "commands": [
       {
