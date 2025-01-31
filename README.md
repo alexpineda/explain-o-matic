@@ -7,7 +7,7 @@ _Voice-guided code change reviews for LLM-generated code. Quickly grok what the 
 ![](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![](https://img.shields.io/badge/VSCode-007ACC?logo=visualstudiocode&logoColor=white)
 
-![CleanShot 2025-01-31 at 09 47 44](https://github.com/user-attachments/assets/3e831909-5aae-44ef-80f0-ed0b9ead54d0)
+![CleanShot 2025-01-31 at 09 47 44](https://github.com/user-attachments/assets/d4195697-2710-496d-97b6-b559104d9dfa)
 
 ## Features
 
@@ -15,7 +15,8 @@ _Voice-guided code change reviews for LLM-generated code. Quickly grok what the 
   Automatically splits code changes into logical sections and speaks summaries using your OS's native TTS (no API needed).
 - **Smart Navigation**  
   Jump between sections with status bar controls and navigator, breakdown sections further by right clicking.
-  ![CleanShot 2025-01-31 at 09 48 25](https://github.com/user-attachments/assets/38a56cfa-7af4-4aa1-8ca8-f17077b0720c)
+  ![CleanShot 2025-01-31 at 09 48 25](https://github.com/user-attachments/assets/ee6b2830-02ec-45bb-839f-4e69f05a7256)
+
 - 🧠 **Supports reasoning models for smarter summaries**
 
 ---
