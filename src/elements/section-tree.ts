@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { Section } from "./llm";
+import type { Section } from "../types";
 
 export class SectionTreeProvider
   implements vscode.TreeDataProvider<SectionItem>
@@ -8,10 +8,15 @@ export class SectionTreeProvider
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private sections: Section[] = [];
-  private currentSection?: number;
+  private currentSection?: Section;
 
-  updateSections(sections: Section[]) {
+  setSections(sections: Section[]) {
     this.sections = sections;
+    this._onDidChangeTreeData.fire();
+  }
+
+  setCurrentSection(section: Section) {
+    this.currentSection = section;
     this._onDidChangeTreeData.fire();
   }
 
@@ -21,7 +26,7 @@ export class SectionTreeProvider
 
   getChildren(): Thenable<SectionItem[]> {
     return Promise.resolve(
-      this.sections.map((s, i) => new SectionItem(s, i === this.currentSection))
+      this.sections.map((s) => new SectionItem(s, this.currentSection === s))
     );
   }
 }

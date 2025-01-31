@@ -1,54 +1,10 @@
 import { generateText, type CoreMessage } from "ai";
 import * as vscode from "vscode";
 import { SECTION_SYSTEM_PROMPT, SECTION_USER_PROMPT } from "./prompts";
-import { outputChannel } from "./output-channel";
-import { z } from "zod";
-import { sectionerConfig } from "./config";
-import { createReasonerModel, createSectionerModel } from "./providers";
-
-export class UserAbortedError extends Error {
-  constructor() {
-    super("User aborted");
-  }
-}
-
-export async function thinkAboutCode(
-  code: string,
-  token: vscode.CancellationToken
-): Promise<{ thoughts?: string; error?: Error }> {
-  try {
-    const controller = new AbortController();
-    token?.onCancellationRequested(() => {
-      controller.abort();
-    });
-
-    outputChannel.appendLine("THINKING");
-    const response = await generateText({
-      abortSignal: controller.signal,
-      maxTokens: 1,
-      model: createReasonerModel(),
-      system: SECTION_SYSTEM_PROMPT,
-      prompt: SECTION_USER_PROMPT(code),
-    });
-    outputChannel.appendLine("DONE THINKING");
-
-    return {
-      thoughts: response.reasoning,
-      error: undefined,
-    };
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      return {
-        thoughts: undefined,
-        error: new UserAbortedError(),
-      };
-    }
-    return {
-      thoughts: undefined,
-      error: error as Error,
-    };
-  }
-}
+import { sectionerConfig } from "../config";
+import { createSectionerModel } from "./models";
+import { UserAbortedError } from "../utils";
+import { sectionSchema, type Section, type SectionAnalysis } from "../types";
 
 /**
  * Detects sections in the code.
@@ -99,14 +55,14 @@ export async function sectionCode(
             ] satisfies CoreMessage[]),
     });
 
-    outputChannel.appendLine(response.text);
+    // outputChannel.appendLine(response.text);
 
     const sections = response.text
       .split("```section")
       .filter((s) => s.trim())
       .map((section) => {
         const [frontMatter, code] = section.split("---");
-        outputChannel.appendLine(JSON.stringify({ frontMatter, code }));
+        // outputChannel.appendLine(JSON.stringify({ frontMatter, code }));
         const analysis = frontMatter
           .split("\n")
           .filter((n) => n.trim())
@@ -122,7 +78,7 @@ export async function sectionCode(
         if (analysis.startLine >= analysis.endLine) {
           return null;
         }
-        outputChannel.appendLine(JSON.stringify({ analysis, code }));
+        // outputChannel.appendLine(JSON.stringify({ analysis, code }));
         try {
           return sectionSchema.parse({
             analysis,
@@ -132,9 +88,9 @@ export async function sectionCode(
           throw e;
         }
       })
-      .filter((s) => s !== null);
+      .filter((s): s is Section => s !== null);
 
-    outputChannel.appendLine(JSON.stringify(sections));
+    // outputChannel.appendLine(JSON.stringify(sections));
     // After getting sections from LLM
     if (!sections.every((s) => s.analysis.startLine < s.analysis.endLine)) {
       throw new Error("Invalid line numbers: startLine >= endLine");
@@ -148,18 +104,3 @@ export async function sectionCode(
     return { sections: undefined, error: error as Error };
   }
 }
-export type SectionAnalysis = z.infer<typeof sectionAnalysisSchema>;
-
-const sectionAnalysisSchema = z.object({
-  name: z.string(),
-  startLine: z.number(),
-  endLine: z.number(),
-  summary: z.string(),
-});
-
-const sectionSchema = z.object({
-  analysis: sectionAnalysisSchema,
-  code: z.string(),
-});
-
-export type Section = z.infer<typeof sectionSchema>;

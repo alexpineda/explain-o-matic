@@ -1,26 +1,35 @@
 // src/manager.ts
 import * as vscode from "vscode";
-import type { Section } from "./llm";
+import type { Section } from "./types";
 import { speak, stopSpeech } from "./tts";
+import type { SectionTreeProvider } from "./elements/section-tree";
 
-export class CodeReviewManager {
+export class SectionInteractionManager {
   private currentSection = -1;
   private sections: Section[] = [];
   private highlightDecoration: vscode.TextEditorDecorationType;
   private editor: vscode.TextEditor;
   private _onSectionChange = new vscode.EventEmitter<Section>();
-
+  private sectionTreeProvider: SectionTreeProvider;
   public readonly onSectionChange = this._onSectionChange.event;
 
-  constructor(editor: vscode.TextEditor, sections: Section[]) {
+  constructor(
+    editor: vscode.TextEditor,
+    sectionTreeProvider: SectionTreeProvider
+  ) {
     this.editor = editor;
-    this.sections = sections;
+    this.sectionTreeProvider = sectionTreeProvider;
 
     // Configure decoration
     this.highlightDecoration = vscode.window.createTextEditorDecorationType({
       backgroundColor: "rgba(255,240,0,0.3)",
       isWholeLine: true,
     });
+  }
+
+  public setSections(sections: Section[]) {
+    this.sections = sections;
+    this.sectionTreeProvider.setSections(sections);
   }
 
   // Highlight the current section
@@ -38,11 +47,12 @@ export class CodeReviewManager {
       Number.MAX_SAFE_INTEGER // End at end of endLine
     );
 
+    this.sectionTreeProvider.setCurrentSection(section);
     this.editor.setDecorations(this.highlightDecoration, [range]);
     this.editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
   }
 
-  #playSection(section: Section) {
+  #next(section: Section) {
     const stopped = stopSpeech(); // Stop current speech before new one
     this.highlightCurrentSection();
     if (stopped) {
@@ -55,27 +65,23 @@ export class CodeReviewManager {
     this._onSectionChange.fire(section);
   }
 
-  // Move to next section
-  public nextSection() {
+  public next() {
     this.currentSection = (this.currentSection + 1) % this.sections.length;
-    this.#playSection(this.sections[this.currentSection]);
+    this.#next(this.sections[this.currentSection]);
   }
 
-  public jumpToSection(section: Section) {
+  public jumpTo(section: Section) {
     this.currentSection = this.sections.findIndex(
       (s) => s.analysis.startLine === section.analysis.startLine
     );
-    this.#playSection(this.sections[this.currentSection]);
+    this.#next(this.sections[this.currentSection]);
   }
 
-  // Stop the review process
   public stop() {
-    stopSpeech(); // Kill TTS process
+    stopSpeech();
     this.editor.setDecorations(this.highlightDecoration, []);
-    this.dispose();
   }
 
-  // Cleanup
   public dispose() {
     this.highlightDecoration.dispose();
   }

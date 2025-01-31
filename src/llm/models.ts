@@ -5,7 +5,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { reasonerConfig, sectionerConfig, useEnvKeys } from "./config";
+import { reasonerConfig, sectionerConfig, useEnvKeys } from "../config";
+import { outputChannel } from "../elements/output-channel";
 
 export const providers = {
   deepseek: createDeepSeek,
@@ -39,6 +40,9 @@ export const createModel = (provider: Provider, apiKey: string) => {
 };
 
 export const createReasonerModel = () => {
+  outputChannel.appendLine(
+    `Creating reasoner model with provider ${reasonerConfig.provider} and api key ${reasonerConfig.apiKey}`
+  );
   return createModel(
     reasonerConfig.provider as Provider,
     getApiKey(reasonerConfig.apiKey, reasonerConfig.provider as EnvKeyProvider)
@@ -46,6 +50,9 @@ export const createReasonerModel = () => {
 };
 
 export const createSectionerModel = () => {
+  outputChannel.appendLine(
+    `Creating sectioner model with provider ${sectionerConfig.provider} and api key ${sectionerConfig.apiKey}`
+  );
   return createModel(
     sectionerConfig.provider as Provider,
     getApiKey(
@@ -75,6 +82,7 @@ export const getApiKey = (configKey: string, provider: EnvKeyProvider) => {
       envKey = process.env[envKeys[provider]] ?? "";
     }
   }
-
-  return configKey || envKey;
+  const key = configKey || envKey;
+  outputChannel.appendLine(`Using key: ${key}`);
+  return key;
 };

@@ -14,7 +14,7 @@ type SectionerConfig = LLMConfig & {
 
 export const reasonerConfig = config.get<LLMConfig>("reasoner", {
   provider: "deepseek",
-  model: "deepseek-reasoning",
+  model: "deepseek-reasoner",
   apiKey: "",
 });
 export const sectionerConfig = config.get<SectionerConfig>("sectioner", {

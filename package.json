@@ -11,18 +11,12 @@
     "@ai-sdk/xai": "^1.1.5",
     "@types/node": "^22.10.10",
     "@types/vscode": "^1.86.0",
-    "add": "^2.0.6",
     "ai": "^4.1.7",
     "dotenv": "^16.4.7",
-    "markdown-it": "^14.1.0",
-    "openai": "^4.80.1",
-    "source-map-support": "^0.5.21",
-    "yaml": "^2.7.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/markdown-it": "^14.1.2",
     "@vscode/vsce": "^2.23.0",
     "esbuild": "^0.20.0"
   },
@@ -36,7 +30,8 @@
     "watch": "bun run ./scripts/watch-with-esbuild.ts",
     "vsce-package": "bun run vsce package",
     "package": "bun run build && bun run vsce-package",
-    "clean": "rm -r ./dist"
+    "clean": "rm -r ./dist",
+    "typecheck": "tsc --noEmit"
   },
   "//": "START EXTENSION ATTRIBUTES",
   "name": "explain-o-matic",
@@ -45,13 +40,13 @@
   "displayName": "Explain-o-matic",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOURNAME/code-review-companion"
+    "url": "https://github.com/alexpineda/explain-o-matic"
   },
   "contributes": {
     "commands": [
       {
         "command": "codeReview.start",
-        "title": "Review Code Changes"
+        "title": "Explain-o-matic"
       },
       {
         "command": "codeReview.next",
@@ -105,8 +100,13 @@
         },
         "explainomatic.useEnvKeys": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Whether to try and use environment variables for the LLM API keys."
+        },
+        "explainomatic.showStatusBarButtons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show the status bar buttons."
         },
         "explainomatic.llm": {
           "type": "object",
