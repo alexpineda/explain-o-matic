@@ -23,17 +23,18 @@ export function stopSpeech() {
 }
 
 const _sanitize = (text: string) => {
-  const sanitizedText = text.replace(/[^\p{L}\p{N}\s.,!?;:'"()-]/gu, ""); // Unicode-aware sanitization
+  // Allow common code symbols but remove potentially dangerous chars
+  const sanitizedText = text.replace(/[^\p{L}\p{N}\s.,!?;:'"()\-=><&#]/gu, "");
 
   if (platform() === "win32") {
     return sanitizedText
       .replace(/"/g, '\\"') // Escape double quotes
-      .replace(/'/g, "\\'") // Escape single quotes
+      .replace(/'/g, "''") // Correct PowerShell single quote escape
       .trim();
   } else {
     return sanitizedText
-      .replace(/"/g, '\\"') // Escape double quotes
-      .replace(/'/g, "''") // Escape single quotes
+      .replace(/"/g, '\\"') // Escape double quotes for bash
+      .replace(/'/g, "") // Remove single quotes (safe in double-quoted)
       .trim();
   }
 };
