@@ -24,7 +24,8 @@ _Voice-guided code walkthroughs. Great for LLM-generated code. Quickly grok what
 This extension is experimental and not all features are available.
 
 - ✅ Tested on macOS Sequoia
-- ⚠️ TTS not tested on Windows/Linux
+- ✅ Tested on Windows 11
+- ⚠️ TTS not tested on Linux
 
 ## Install
 

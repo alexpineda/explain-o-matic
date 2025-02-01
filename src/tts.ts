@@ -41,7 +41,7 @@ const _sanitize = (text: string) => {
 
 const _speakCommand = (text: string) => {
   if (platform() === "win32") {
-    return `Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('${text}')`;
+    return `powershell.exe Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('${text}')`;
   } else if (platform() === "darwin") {
     return `say "${text}"`;
   } else {
