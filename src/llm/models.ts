@@ -6,6 +6,7 @@ import { createXai } from "@ai-sdk/xai";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { reasonerConfig, sectionerConfig, useEnvKeys } from "../config";
+import { debugChannel } from "../elements/output-channel";
 
 export const providers = {
   deepseek: createDeepSeek,
@@ -76,5 +77,10 @@ export const getApiKey = (configKey: string, provider: EnvKeyProvider) => {
     }
   }
   const key = configKey || envKey;
+  if (!key) {
+    throw new Error(`API Key for ${provider} is missing`);
+  } else {
+    debugChannel(`Using API Key for ${provider}`);
+  }
   return key;
 };

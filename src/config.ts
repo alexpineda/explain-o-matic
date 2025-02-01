@@ -12,12 +12,12 @@ type SectionerConfig = LLMConfig & {
   temperature: number;
 };
 
-export const reasonerConfig = config.get<LLMConfig>("reasoner", {
+export const reasonerConfig = config.get<LLMConfig>("llm.reasoner", {
   provider: "deepseek",
   model: "deepseek-reasoner",
   apiKey: "",
 });
-export const sectionerConfig = config.get<SectionerConfig>("sectioner", {
+export const sectionerConfig = config.get<SectionerConfig>("llm.sectioner", {
   provider: "anthropic",
   model: "claude-3-5-sonnet-20241022",
   apiKey: "",

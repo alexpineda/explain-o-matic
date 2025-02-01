@@ -2,10 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "bun",
-      "script": "bun run ./scripts/build-with-esbuild.ts",
-      "problemMatcher": [],
       "label": "bun: build",
+      "type": "shell",
+      "command": "bun run ./scripts/build-with-esbuild.ts",
+      "problemMatcher": [],
       "detail": "bun run ./scripts/build-with-esbuild.ts - package.json",
       "group": {
         "kind": "build",

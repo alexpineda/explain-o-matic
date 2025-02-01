@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import type { Section } from "./types";
 import { speak, stopSpeech } from "./tts";
 import type { SectionTreeProvider } from "./elements/section-tree";
+import { debugChannel } from "./elements/output-channel";
 
 export class SectionInteractionManager {
   private currentSection: Section | undefined;
@@ -90,7 +91,11 @@ export class SectionInteractionManager {
     // necessary to wait for stop speech
     // also acts as debounce for fast switchers
     this.#timeout = setTimeout(() => {
+      try {
       speak(section.analysis.summary);
+      } catch (e) {
+        debugChannel((e as Error).message)
+      }
     }, 500);
     this._onSectionChange.fire(section);
   }
