@@ -24,8 +24,11 @@ export function speak(text: string): Promise<void> {
   stopSpeech(); // Stop any existing speech
 
   return new Promise((resolve, reject) => {
-    const sanitizedText = text.replace(/[^a-zA-Z0-9 .,]/g, "");
-
+    const sanitizedText = text
+      .replace(/[^\p{L}\p{N}\s.,!?;:'"()-]/gu, "") // Unicode-aware sanitization
+      .replace(/"/g, '\\"') // Escape double quotes
+      .replace(/'/g, "\\'") // Escape single quotes
+      .trim();
     let command = "";
     if (platform() === "win32") {
       command = `powershell -Command "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('${sanitizedText}');"`;

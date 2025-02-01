@@ -20,7 +20,6 @@ export const getSections = async (fileCode: FileCode, thoughts?: string) => {
         return;
       }
 
-      // outputChannel.appendLine(code);
       const { sections, error } = await sectionCode(
         fileCode.code,
         thoughts,
@@ -33,7 +32,6 @@ export const getSections = async (fileCode: FileCode, thoughts?: string) => {
         vscode.window.showErrorMessage(`Code review failed: ${error}`);
         return;
       }
-      // outputChannel.appendLine(JSON.stringify(sections));
 
       if (!sections || sections.length === 0) {
         vscode.window.showErrorMessage("No sections detected!");

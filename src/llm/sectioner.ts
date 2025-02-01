@@ -5,6 +5,7 @@ import { sectionerConfig } from "../config";
 import { createSectionerModel } from "./models";
 import { UserAbortedError } from "../utils";
 import { sectionSchema, type Section, type SectionAnalysis } from "../types";
+import { debugChannel } from "../elements/output-channel";
 
 /**
  * Detects sections in the code.
@@ -55,14 +56,12 @@ export async function sectionCode(
             ] satisfies CoreMessage[]),
     });
 
-    // outputChannel.appendLine(response.text);
-
     const sections = response.text
       .split("```section")
       .filter((s) => s.trim())
       .map((section) => {
         const [frontMatter, code] = section.split("---");
-        // outputChannel.appendLine(JSON.stringify({ frontMatter, code }));
+        debugChannel(JSON.stringify({ frontMatter, code }));
         const analysis = frontMatter
           .split("\n")
           .filter((n) => n.trim())
@@ -78,7 +77,7 @@ export async function sectionCode(
         if (analysis.startLine >= analysis.endLine) {
           return null;
         }
-        // outputChannel.appendLine(JSON.stringify({ analysis, code }));
+        debugChannel(JSON.stringify({ analysis, code }));
         try {
           return sectionSchema.parse({
             analysis,
@@ -91,8 +90,6 @@ export async function sectionCode(
       })
       .filter((s): s is Section => s !== null);
 
-    // outputChannel.appendLine(JSON.stringify(sections));
-    // After getting sections from LLM
     if (!sections.every((s) => s.analysis.startLine < s.analysis.endLine)) {
       throw new Error("Invalid line numbers: startLine >= endLine");
     }
